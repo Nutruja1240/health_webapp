@@ -1,111 +1,56 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>โปรแกรมประเมินสุขภาพ</title>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Sarabun', sans-serif;
-      background: #fff0f5;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #d46a92;
-    }
-    label {
-      display: block;
-      margin-top: 12px;
-      color: #555;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-top: 5px;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background-color: #ff92b2;
-      color: white;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      margin-top: 20px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #ec7299;
-    }
-    .result {
-      margin-top: 25px;
-      padding: 15px;
-      background-color: #ffe4ec;
-      border: 1px dashed #ec7299;
-      border-radius: 8px;
-    }
-    .logo {
-      display: block;
-      margin: 0 auto 20px;
-      width: 100px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>โปรแกรมประเมินสุขภาพ</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f8ff; }
+        input, select { margin: 5px; padding: 5px; }
+        .result { background: #fff; padding: 10px; margin-top: 20px; border-radius: 8px; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="โลโก้" class="logo">
-
-    <h1>โปรแกรมประเมินสุขภาพ</h1>
-
-    <form method="post">
-      <label>เพศ:</label>
-      <select name="gender">
-        <option value="male">ชาย</option>
-        <option value="female">หญิง</option>
-      </select>
-
-      <label>น้ำหนัก (กก.):</label>
-      <input type="number" step="0.1" name="weight" required>
-
-      <label>ส่วนสูง (ซม.):</label>
-      <input type="number" step="0.1" name="height" required>
-
-      <label>รอบเอว (ซม.):</label>
-      <input type="number" step="0.1" name="waist" required>
-
-      <label>ค่าน้ำตาลในเลือด (mg/dL):</label>
-      <input type="number" step="0.1" name="sugar" required>
-
-      <label>ความดัน (ตัวบน):</label>
-      <input type="number" name="systolic" required>
-
-      <label>ตัวล่าง:</label>
-      <input type="number" name="diastolic" required>
-
-      <button type="submit">ประเมิน</button>
+    <h2>โปรแกรมประเมินสุขภาพ</h2>
+    <form method="POST">
+        เพศ: 
+        <select name="gender">
+            <option value="male">ชาย</option>
+            <option value="female">หญิง</option>
+        </select><br>
+        น้ำหนัก (กก.): <input type="number" name="weight" required><br>
+        ส่วนสูง (ซม.): <input type="number" name="height" required><br>
+        รอบเอว (ซม.): <input type="number" name="waist" required><br>
+        ค่าน้ำตาลในเลือด (mg/dL): <input type="number" name="sugar" required><br>
+        ความดัน (ตัวบน): <input type="number" name="systolic" required>
+        ตัวล่าง: <input type="number" name="diastolic" required><br>
+        <button type="submit">ประเมิน</button>
     </form>
 
     {% if result %}
+<div class="result">
+  <p><strong>BMI:</strong> {{ result.bmi }} - {{ result.bmi_status }}<br>
+  <strong>คำแนะนำ:</strong> {{ result.bmi_advice }}</p>
+
+  <p><strong>ระดับน้ำตาล:</strong> {{ result.sugar_status }}<br>
+  <strong>คำแนะนำ:</strong> {{ result.sugar_advice }}</p>
+
+  <p><strong>ความดันโลหิต:</strong> {{ result.bp_status }}<br>
+  <strong>คำแนะนำ:</strong> {{ result.bp_advice }}</p>
+
+  <p><strong>รอบเอว:</strong> {{ result.waist_status }}<br>
+  <strong>คำแนะนำ:</strong> {{ result.waist_advice }}</p>
+</div>
+
     <div class="result">
-      <p><strong>BMI:</strong> {{ result.bmi }} - {{ result.bmi_status }}</p>
-      <p><strong>น้ำตาล:</strong> {{ result.sugar_status }}<br>{{ result.sugar_advice }}</p>
-      <p><strong>ความดัน:</strong> {{ result.bp_status }}<br>{{ result.bp_advice }}</p>
-      <p><strong>รอบเอว:</strong> {{ result.waist_status }}<br>{{ result.waist_advice }}</p>
+        {% if result.error %}
+            <strong style="color:red">{{ result.error }}</strong>
+        {% else %}
+            <p><strong>BMI:</strong> {{ result.bmi }} - {{ result.bmi_status }}</p>
+            <p><strong>น้ำตาล:</strong> {{ result.sugar_status }} - {{ result.sugar_advice }}</p>
+            <p><strong>ความดัน:</strong> {{ result.bp_status }} - {{ result.bp_advice }}</p>
+            <p><strong>รอบเอว:</strong> {{ result.waist_status }}<br>{{ result.waist_advice }}</p>
+        {% endif %}
     </div>
     {% endif %}
-  </div>
 </body>
 </html>
