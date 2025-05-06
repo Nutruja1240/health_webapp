@@ -1,140 +1,167 @@
 from flask import Flask, render_template, request
-
 app = Flask(__name__)
 
-@app.route('/', methods=['GET', 'POST','HEAD'])
-def health_check():
+@app.route('/', methods=['GET', 'POST'])
+def index():
     result = None
     if request.method == 'POST':
-        try:
-            weight = float(request.form['weight'])
-            height = float(request.form['height']) / 100
-            waist = float(request.form['waist'])
-            sugar = float(request.form['sugar'])
-            systolic = int(request.form['systolic'])
-            diastolic = int(request.form['diastolic'])
-            gender = request.form['gender']
-            age = int(request.form['age'])
+        # รับข้อมูลจากฟอร์ม
+        age = int(request.form['age'])
+        gender = request.form['gender']
+        height = float(request.form['height'])
+        weight = float(request.form['weight'])
+        waist = float(request.form['waist'])
+        sugar = float(request.form['sugar'])
+        bp_sys = int(request.form['bp_sys'])
+        bp_dia = int(request.form['bp_dia'])
 
-            # ดัชนีมวลกาย
-            bmi = round(weight / (height ** 2), 2)
-            bmi_status, bmi_advice = interpret_bmi(bmi)
+        # ทดสอบสมรรถภาพทางกาย
+        sit_and_reach = float(request.form['sit_and_reach'])
+        step_test = int(request.form['step_test'])
+        chair_stand = int(request.form['chair_stand'])
+        grip_strength = float(request.form['grip_strength'])
+        sit_ups = int(request.form['sit_ups'])
 
-            # น้ำตาล, ความดัน, รอบเอว
-            sugar_status, sugar_advice = interpret_sugar(sugar)
-            bp_status, bp_advice = interpret_bp(systolic, diastolic)
-            waist_status, waist_advice = interpret_waist(waist, gender)
+        # BMI
+        bmi = round(weight / ((height / 100) ** 2), 2)
+        if bmi < 18.5:
+            bmi_status = 'ผอม'
+            bmi_advice = 'ควรรับประทานอาหารให้เพียงพอและออกกำลังกายเสริมสร้างกล้ามเนื้อ'
+        elif 18.5 <= bmi < 23:
+            bmi_status = 'ปกติ'
+            bmi_advice = 'ควรรักษาน้ำหนักและออกกำลังกายสม่ำเสมอ'
+        elif 23 <= bmi < 25:
+            bmi_status = 'น้ำหนักเกิน'
+            bmi_advice = 'ควรควบคุมอาหารและเพิ่มการออกกำลังกาย'
+        elif 25 <= bmi < 30:
+            bmi_status = 'อ้วนระดับ 1'
+            bmi_advice = 'เริ่มควบคุมอาหารและออกกำลังกายเพื่อลดน้ำหนัก'
+        else:
+            bmi_status = 'อ้วนระดับ 2'
+            bmi_advice = 'ควรปรึกษาแพทย์และควบคุมน้ำหนักอย่างจริงจัง'
 
-            # สมรรถภาพทางกาย
-            sit_and_reach = float(request.form['sit_and_reach'])
-            step_test = int(request.form['step_test'])
-            chair_stand = int(request.form['chair_stand'])
-            grip_strength = float(request.form['grip_strength'])
-            sit_ups = int(request.form['sit_ups'])
+        # น้ำตาล
+        if sugar < 70:
+            sugar_status = 'น้ำตาลต่ำ'
+            sugar_advice = 'ควรรับประทานอาหารว่างที่มีคาร์โบไฮเดรตเชิงซ้อน'
+        elif 70 <= sugar <= 99:
+            sugar_status = 'ปกติ'
+            sugar_advice = 'ควรรักษาระดับน้ำตาลและออกกำลังกายสม่ำเสมอ'
+        else:
+            sugar_status = 'น้ำตาลสูง'
+            sugar_advice = 'ควรปรึกษาแพทย์และปรับพฤติกรรมการกิน'
 
-            fitness_results = {
-                'sit_and_reach': interpret_sit_and_reach(age, gender, sit_and_reach),
-                'step_test': interpret_step_test(age, gender, step_test),
-                'chair_stand': interpret_chair_stand(age, gender, chair_stand),
-                'grip_strength': interpret_grip_strength(age, gender, grip_strength),
-                'sit_ups': interpret_sit_ups(age, gender, sit_ups)
+        # ความดัน
+        if bp_sys < 120 and bp_dia < 80:
+            bp_status = 'ความดันปกติ'
+            bp_advice = 'ควรรักษาพฤติกรรมสุขภาพที่ดี'
+        elif 120 <= bp_sys <= 139 or 80 <= bp_dia <= 89:
+            bp_status = 'ความดันเริ่มสูง'
+            bp_advice = 'ควรลดเค็มและออกกำลังกายสม่ำเสมอ'
+        else:
+            bp_status = 'ความดันสูง'
+            bp_advice = 'ควรพบแพทย์เพื่อตรวจรักษาและควบคุมอาหาร'
+
+        # รอบเอว
+        if (gender == 'ชาย' and waist < 90) or (gender == 'หญิง' and waist < 80):
+            waist_status = 'รอบเอวปกติ'
+            waist_advice = 'ควรรักษาพฤติกรรมการกินและการออกกำลังกาย'
+        else:
+            waist_status = 'รอบเอวเกินเกณฑ์'
+            waist_advice = 'ควรลดไขมันหน้าท้องด้วยการควบคุมอาหารและออกกำลังกาย'
+
+        # ฟิตเนส (สมรรถภาพทางกาย)
+        fitness_results = {}
+
+        def level(val, good, fair, poor):
+            if val >= good:
+                return 'ดีมาก'
+            elif val >= fair:
+                return 'ดี'
+            elif val >= poor:
+                return 'พอใช้'
+            else:
+                return 'ควรปรับปรุง'
+
+        def interpret(name, value, level):
+            desc = ''
+            advice = ''
+            if level == 'ดีมาก':
+                desc = 'อยู่ในระดับดีมาก แสดงถึงสมรรถภาพที่ยอดเยี่ยม'
+                advice = 'รักษาการออกกำลังกายแบบนี้ไว้ต่อเนื่อง'
+            elif level == 'ดี':
+                desc = 'อยู่ในระดับดี สมรรถภาพอยู่ในเกณฑ์เหมาะสม'
+                advice = 'ควรออกกำลังกายต่อเนื่องเพื่อรักษาระดับนี้'
+            elif level == 'พอใช้':
+                desc = 'สมรรถภาพพอใช้ แต่ยังมีพัฒนาการได้อีก'
+                advice = 'ควรเพิ่มกิจกรรมทางกาย เช่น เดินเร็วหรือว่ายน้ำ'
+            else:
+                desc = 'สมรรถภาพต่ำกว่ามาตรฐาน'
+                advice = 'ควรปรึกษาผู้เชี่ยวชาญเพื่อวางแผนการออกกำลังกาย'
+
+            return {
+                'value': value,
+                'level': level,
+                'description': desc,
+                'recommendation': advice
             }
 
-            result = {
-                'bmi': bmi,
-                'bmi_status': bmi_status,
-                'bmi_advice': bmi_advice,
-                'sugar_status': sugar_status,
-                'sugar_advice': sugar_advice,
-                'bp_status': bp_status,
-                'bp_advice': bp_advice,
-                'waist_status': waist_status,
-                'waist_advice': waist_advice,
-                'fitness_results': fitness_results
-            }
+        # เกณฑ์สมรรถภาพเบื้องต้น (ชายอายุ 20-29 ปี)
+        fitness_results['sit_and_reach'] = interpret(
+            'นั่งงอตัว', sit_and_reach,
+            level(sit_and_reach, 35, 30, 25)
+        )
+        fitness_results['step_test'] = interpret(
+            'Step Test', step_test,
+            level(step_test, 130, 110, 90)
+        )
+        fitness_results['chair_stand'] = interpret(
+            'Chair Stand', chair_stand,
+            level(chair_stand, 30, 25, 20)
+        )
+        fitness_results['grip_strength'] = interpret(
+            'แรงบีบมือ', grip_strength,
+            level(grip_strength, 45, 35, 25)
+        )
+        fitness_results['sit_ups'] = interpret(
+            'Sit-Ups', sit_ups,
+            level(sit_ups, 40, 30, 20)
+        )
 
-        except Exception as e:
-            result = {'error': 'กรุณากรอกข้อมูลให้ครบถ้วน'}
+        # แปลงชื่อภาษาไทยสำหรับแสดงผล
+        thai_labels = {
+            'sit_and_reach': 'การนั่งงอตัวไปข้างหน้า',
+            'step_test': 'การยกเข่าขึ้น-ลง 3 นาที',
+            'chair_stand': 'การยืน-นั่งบนเก้าอี้ 60 วินาที',
+            'grip_strength': 'แรงบีบมือ',
+            'sit_ups': 'การซิตอัพ'
+        }
+
+        fitness_display = []
+        for key, data in fitness_results.items():
+            fitness_display.append({
+                'name': thai_labels.get(key, key),
+                'value': data['value'],
+                'level': data['level'],
+                'description': data['description'],
+                'recommendation': data['recommendation']
+            })
+
+        # รวมผลทั้งหมด
+        result = {
+            'bmi': bmi,
+            'bmi_status': bmi_status,
+            'bmi_advice': bmi_advice,
+            'sugar_status': sugar_status,
+            'sugar_advice': sugar_advice,
+            'bp_status': bp_status,
+            'bp_advice': bp_advice,
+            'waist_status': waist_status,
+            'waist_advice': waist_advice,
+            'fitness': fitness_display
+        }
 
     return render_template('index.html', result=result)
 
-# ฟังก์ชันแปลผลสุขภาพทั่วไป
-def interpret_bmi(bmi):
-    if bmi < 18.5:
-        return 'ผอม', 'ควรเพิ่มน้ำหนักด้วยอาหารที่มีพลังงานสูง เช่น ข้าวกล้อง ถั่ว เนื้อสัตว์ และรับประทานอาหารให้ครบ 3 มื้อ พร้อมออกกำลังกายเบา ๆ อย่างสม่ำเสมอ'
-    elif bmi < 23:
-        return 'ปกติ', 'รักษารูปร่างโดยรับประทานอาหารให้ครบ 5 หมู่ ลดหวาน มัน เค็ม และออกกำลังกายอย่างน้อย 150 นาที/สัปดาห์'
-    elif bmi < 25:
-        return 'น้ำหนักเกิน', 'ลดปริมาณอาหารจำพวกแป้งและไขมัน เพิ่มผักและผลไม้ ออกกำลังกายแบบแอโรบิก เช่น เดินเร็ว วิ่งเบา ๆ อย่างน้อย 30 นาที/วัน'
-    elif bmi < 30:
-        return 'อ้วนระดับ 1', 'ควรลดน้ำหนักโดยควบคุมอาหาร (เช่น ลดข้าวขาว อาหารทอด ของหวาน) และออกกำลังกายเพิ่ม เช่น ปั่นจักรยาน ว่ายน้ำ'
-    else:
-        return 'อ้วนระดับ 2', 'เสี่ยงโรคเรื้อรัง ควรปรึกษาแพทย์ นักโภชนาการ และควบคุมอาหารอย่างเข้มงวด พร้อมออกกำลังกายสม่ำเสมอ เช่น เดินเร็ว/โยคะ อย่างน้อย 5 วัน/สัปดาห์'
-
-def interpret_sugar(sugar):
-    if sugar < 70:
-        return 'น้ำตาลต่ำ', 'ควรปรึกษาแพทย์เพื่อประเมินสาเหตุ และวางแผนการดูแล'
-    elif sugar < 100:
-        return 'ปกติ', 'รักษาระดับน้ำตาลให้คงที่ โดยรับประทานอาหารที่เหมาะสมและออกกำลังกายสม่ำเสมอ'
-    elif sugar < 126:
-        return 'ระดับน้ำตาลสูง', 'ควรควบคุมอาหาร หลีกเลี่ยงของหวานและแป้งขัดขาว พร้อมออกกำลังกาย'
-    else:
-        return 'เสี่ยงเบาหวาน', 'ควรพบแพทย์เพื่อตรวจวินิจฉัยเพิ่มเติม และรับคำแนะนำเรื่องอาหารและการดูแลสุขภาพ'
-
-def interpret_bp(sys, dia):
-    if sys < 120 and dia < 80:
-        return 'ความดันปกติ', 'รักษาด้วยการลดเค็ม ออกกำลังกาย และควบคุมน้ำหนัก'
-    elif 120 <= sys <= 139 or 80 <= dia <= 89:
-        return 'ความดันเริ่มสูง', 'ควรลดเค็ม ออกกำลังกาย และติดตามความดันอย่างสม่ำเสมอ'
-    else:
-        return 'ความดันสูง', 'ควรพบแพทย์ และควบคุมอาหาร/น้ำหนัก'
-
-def interpret_waist(waist, gender):
-    if (gender == 'male' and waist > 90) or (gender == 'female' and waist > 80):
-        return 'รอบเอวเกินเกณฑ์', 'คุณมีรอบเอวสูง อาจเสี่ยงต่อโรคหัวใจ ความดัน เบาหวาน ควรลดน้ำตาล ออกกำลังกายสม่ำเสมอ และควบคุมน้ำหนัก'
-    else:
-        return 'รอบเอวปกติ', 'ดีมาก ควรรักษาไว้ด้วยการควบคุมอาหารและออกกำลังกาย'
-
-# ฟังก์ชันแปลผลสมรรถภาพทางกาย (ตัวอย่างแบบสั้น ใช้ได้กับช่วงอายุทั่วไป)
-def interpret_sit_and_reach(age, gender, value):
-    if value >= 20:
-        return ('ดี', 'กล้ามเนื้อหลังและขาอยู่ในเกณฑ์ดี ช่วยลดอาการปวดหลัง')
-    elif value >= 10:
-        return ('ปานกลาง', 'ควรยืดเหยียดกล้ามเนื้อหลังและขาสม่ำเสมอ')
-    else:
-        return ('ต่ำ', 'ความยืดหยุ่นต่ำ เสี่ยงบาดเจ็บ ควรฝึกโยคะหรือยืดเหยียดทุกวัน')
-
-def interpret_step_test(age, gender, value):
-    if value >= 90:
-        return ('ดี', 'สมรรถภาพหัวใจและปอดดีเยี่ยม ควรรักษาไว้')
-    elif value >= 60:
-        return ('ปานกลาง', 'ควรออกกำลังกายแบบแอโรบิกเพิ่ม เช่น เดินเร็ว ปั่นจักรยาน')
-    else:
-        return ('ต่ำ', 'สมรรถภาพหัวใจไม่ดี เสี่ยงเหนื่อยง่าย ควรเริ่มออกกำลังกายเบา ๆ')
-
-def interpret_chair_stand(age, gender, value):
-    if value >= 25:
-        return ('ดี', 'กล้ามเนื้อขาแข็งแรง ลดความเสี่ยงหกล้ม')
-    elif value >= 15:
-        return ('ปานกลาง', 'ควรฝึกนั่ง-ลุกจากเก้าอี้ หรือออกกำลังกายขา')
-    else:
-        return ('ต่ำ', 'กล้ามเนื้อขาอ่อนแรง ควรเสริมสร้างโดยฝึกยืน-นั่งบ่อย ๆ')
-
-def interpret_grip_strength(age, gender, value):
-    if value >= 0.5:
-        return ('ดี', 'กล้ามเนื้อมือและแขนแข็งแรง ช่วยในการทำกิจกรรมประจำวัน')
-    elif value >= 0.3:
-        return ('ปานกลาง', 'ควรฝึกกำมือ บีบลูกบอลยาง หรือยกดัมเบลเบา ๆ')
-    else:
-        return ('ต่ำ', 'แรงบีบมือต่ำ เสี่ยงกล้ามเนื้ออ่อนแรง ควรฝึกใช้งานมือบ่อย ๆ')
-
-def interpret_sit_ups(age, gender, value):
-    if value >= 30:
-        return ('ดี', 'กล้ามเนื้อหน้าท้องแข็งแรง ลดอาการปวดหลัง')
-    elif value >= 15:
-        return ('ปานกลาง', 'ควรฝึกซิตอัพหรือท่าแพลงก์เสริมกล้ามเนื้อหน้าท้อง')
-    else:
-        return ('ต่ำ', 'กล้ามเนื้อหน้าท้องอ่อนแรง ควรฝึกสม่ำเสมอเพื่อลดอาการปวดหลัง')
-
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run()
