@@ -1,105 +1,68 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <title>โปรแกรมประเมินสุขภาพ</title>
-    <style>
-        body {
-            font-family: "Kanit", sans-serif;
-            background-color: #f7fdfc;
-            margin: 40px;
-        }
-        .container {
-            width: 100%;
-            max-width: 600px;
-            margin: auto;
-        }
-        h1 {
-            color: #d6336c;
-            text-align: center;
-        }
-        form {
-            background-color: #fff;
-            padding: 20px;
-            border: 2px solid #87d3cc;
-            border-radius: 10px;
-        }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0 15px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        button {
-            background-color: #d6336c;
-            color: white;
-            padding: 10px;
-            width: 100%;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .result {
-            background-color: #e0f7f5;
-            border: 2px dashed #87d3cc;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 10px;
-        }
-        .emoji {
-            font-size: 24px;
-            margin-left: 8px;
-        }
-    </style>
-</head>
-<body>
-<div class="container">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="โลโก้" style="display: block; margin: 0 auto 20px; width: 120px;">
-    <h1>โปรแกรมประเมินสุขภาพ</h1>
-    <form method="post">
-        <label>เพศ:</label>
-        <select name="gender">
-            <option value="male">ชาย</option>
-            <option value="female">หญิง</option>
-        </select>
-        <label>น้ำหนัก (กก.):</label>
-        <input type="text" name="weight">
-        <label>ส่วนสูง (ซม.):</label>
-        <input type="text" name="height">
-        <label>รอบเอว (ซม.):</label>
-        <input type="text" name="waist">
-        <label>ค่าน้ำตาลในเลือด (mg/dL):</label>
-        <input type="text" name="sugar">
-        <label>ความดัน (ตัวบน):</label>
-        <input type="text" name="systolic">
-        <label>ตัวล่าง:</label>
-        <input type="text" name="diastolic">
-        <button type="submit">ประเมิน</button>
-    </form>
+<!-- ส่วนแสดงผล BMI พร้อมอีโมจิ -->
+<p><strong>BMI:</strong> {{ result['bmi'] }} – {{ result['bmi_status'] }}
+  {% if result['bmi_status'] == 'ปกติ' %}
+    <span class="emoji">☺</span>
+  {% elif result['bmi_status'].startswith('อ้วน') %}
+    <span class="emoji">△</span>
+  {% elif result['bmi_status'] == 'ผอม' %}
+    <span class="emoji">⚖</span>
+  {% else %}
+    <span class="emoji">✪</span>
+  {% endif %}
+</p>
+<p><strong>คำแนะนำ:</strong> {{ result['bmi_advice'] }}</p>
 
-    {% if result %}
-    <div class="result">
-        <p><strong>BMI:</strong> {{ result['bmi'] }} – {{ result['bmi_status'] }}
-            {% if result['bmi_status'] == 'ปกติ' %}
-                <span class="emoji">😄</span>
-            {% elif result['bmi_status'].startswith('อ้วน') %}
-                <span class="emoji">⚠️</span>
-            {% elif result['bmi_status'] == 'ผอม' %}
-                <span class="emoji">🤏</span>
-            {% else %}
-                <span class="emoji">💡</span>
-            {% endif %}
-        </p>
-        <p><strong>คำแนะนำ:</strong> {{ result['bmi_advice'] }}</p>
-        <p><strong>ระดับน้ำตาล:</strong> {{ result['sugar_status'] }}</p>
-        <p><strong>คำแนะนำ:</strong> {{ result['sugar_advice'] }}</p>
-        <p><strong>ความดัน:</strong> {{ result['bp_status'] }}</p>
-        <p><strong>คำแนะนำ:</strong> {{ result['bp_advice'] }}</p>
-        <p><strong>รอบเอว:</strong> {{ result['waist_status'] }}</p>
-        <p><strong>คำแนะนำ:</strong> {{ result['waist_advice'] }}</p>
-    </div>
-    {% endif %}
-</div>
-</body>
-</html>
+<!-- เพิ่มส่วนของน้ำตาล -->
+<p><strong>ระดับน้ำตาล:</strong> {{ result['sugar_status'] }}
+  {% if result['sugar_status'] == 'ปกติ' %}
+    <span class="emoji">✔</span>
+  {% elif result['sugar_status'] == 'น้ำตาลต่ำ' %}
+    <span class="emoji">↓</span>
+  {% else %}
+    <span class="emoji">⚠</span>
+  {% endif %}
+</p>
+<p><strong>คำแนะนำ:</strong> {{ result['sugar_advice'] }}</p>
+
+<!-- ความดัน -->
+<p><strong>ความดัน:</strong> {{ result['bp_status'] }}
+  {% if result['bp_status'] == 'ความดันปกติ' %}
+    <span class="emoji">❤️</span>
+  {% elif result['bp_status'] == 'ความดันเริ่มสูง' %}
+    <span class="emoji">⚠</span>
+  {% else %}
+    <span class="emoji">❗</span>
+  {% endif %}
+</p>
+<p><strong>คำแนะนำ:</strong> {{ result['bp_advice'] }}</p>
+
+<!-- รอบเอว -->
+<p><strong>รอบเอว:</strong> {{ result['waist_status'] }}
+  {% if result['waist_status'] == 'รอบเอวปกติ' %}
+    <span class="emoji">✔</span>
+  {% else %}
+    <span class="emoji">⚠</span>
+  {% endif %}
+</p>
+<p><strong>คำแนะนำ:</strong> {{ result['waist_advice'] }}</p>
+
+<!-- เพิ่มสมรรถภาพทางกายพร้อมอีโมจิ (ถ้ามีการเพิ่มค่าผลทดสอบไว้ใน result แล้ว) -->
+{% if result['fitness'] %}
+  <hr>
+  <h4>สมรรถภาพทางกาย</h4>
+  {% for test in result['fitness'] %}
+    <p><strong>{{ test.name }}:</strong> {{ test.value }} – {{ test.level }}
+      {% if test.level == 'ดีมาก' %}
+        <span class="emoji">★</span>
+      {% elif test.level == 'ดี' %}
+        <span class="emoji">✔</span>
+      {% elif test.level == 'พอใช้' %}
+        <span class="emoji">△</span>
+      {% else %}
+        <span class="emoji">⚠</span>
+      {% endif %}
+    </p>
+    <p><strong>คำอธิบาย:</strong> {{ test.description }}</p>
+    <p><strong>คำแนะนำ:</strong> {{ test.recommendation }}</p>
+  {% endfor %}
+{% endif %}
