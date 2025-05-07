@@ -1,116 +1,207 @@
-<style>
-  .result-group { margin-bottom: 20px; padding: 10px; border-bottom: 1px solid #ccc; }
-  .good { color: green; }
-  .warning { color: orange; }
-  .bad { color: red; }
-  .emoji { font-size: 1.2em; margin-left: 5px; }
-</style>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ระบบประเมินสุขภาพ</title>
+  <style>
+    body {
+      font-family: Kanit, sans-serif;
+      background-color: #ffffff;
+      margin: 30px;
+      color: #333;
+    }
+    input, select {
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .form-section {
+      margin-bottom: 20px;
+      border: 1px solid #90dedb;
+      padding: 20px;
+      border-radius: 10px;
+      background-color: #f0fdfd;
+    }
+    .result-group {
+      margin-bottom: 20px;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+    }
+    .good { color: green; }
+    .warning { color: orange; }
+    .bad { color: red; }
+    .emoji { font-size: 1.2em; margin-left: 5px; }
+    button {
+      background-color: #64c7c0;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      font-size: 16px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
 
-<div class="result-group">
-  <h4>ค่าดัชนีมวลกาย (BMI)</h4>
-  <p><strong>BMI:</strong> {{ result['bmi'] }} – {{ result['bmi_status'] }}
-    <span class="emoji">
-      {% if result['bmi_status'] == 'ปกติ' %}
-        ☺
-      {% elif result['bmi_status'].startswith('อ้วน') %}
-        △
-      {% elif result['bmi_status'] == 'ผอม' %}
-        ⚖
-      {% else %}
-        ✪
-      {% endif %}
-    </span>
-  </p>
-  <p><strong>คำแนะนำ:</strong> {{ result['bmi_advice'] }}</p>
-</div>
+  <h2>ระบบประเมินสุขภาพ</h2>
 
-<div class="result-group">
-  <h4>ระดับน้ำตาลในเลือด</h4>
-  <p><strong>ระดับน้ำตาล:</strong> {{ result['sugar_status'] }}
-    <span class="emoji">
-      {% if result['sugar_status'] == 'ปกติ' %}
-        ✔
-      {% elif result['sugar_status'] == 'น้ำตาลต่ำ' %}
-        ↓
-      {% else %}
-        ⚠
-      {% endif %}
-    </span>
-  </p>
-  <p><strong>คำแนะนำ:</strong> {{ result['sugar_advice'] }}</p>
-</div>
+  <form method="POST">
+    <div class="form-section">
+      <label>อายุ (ปี):</label>
+      <input type="number" name="age" required>
 
-<div class="result-group">
-  <h4>ความดันโลหิต</h4>
-  <p><strong>ความดัน:</strong> {{ result['bp_status'] }}
-    <span class="emoji">
-      {% if result['bp_status'] == 'ความดันปกติ' %}
-        ❤️
-      {% elif result['bp_status'] == 'ความดันเริ่มสูง' %}
-        ⚠
-      {% else %}
-        ❗
-      {% endif %}
-    </span>
-  </p>
-  <p><strong>คำแนะนำ:</strong> {{ result['bp_advice'] }}</p>
-</div>
+      <label>เพศ:</label>
+      <select name="gender" required>
+        <option value="ชาย">ชาย</option>
+        <option value="หญิง">หญิง</option>
+      </select>
 
-<div class="result-group">
-  <h4>รอบเอว</h4>
-  <p><strong>รอบเอว:</strong> {{ result['waist_status'] }}
-    <span class="emoji">
-      {% if result['waist_status'] == 'รอบเอวปกติ' %}
-        ✔
-      {% else %}
-        ⚠
-      {% endif %}
-    </span>
-  </p>
-  <p><strong>คำแนะนำ:</strong> {{ result['waist_advice'] }}</p>
-</div>
+      <label>ส่วนสูง (ซม.):</label>
+      <input type="number" name="height" required>
 
-{% if result['fitness'] %}
-  <div class="result-group">
-    <h4>สมรรถภาพทางกาย</h4>
-    {% for test in result['fitness'] %}
+      <label>น้ำหนัก (กก.):</label>
+      <input type="number" name="weight" required>
+
+      <label>รอบเอว (ซม.):</label>
+      <input type="number" name="waist" required>
+
+      <label>ระดับน้ำตาลในเลือด (มก./ดล.):</label>
+      <input type="number" name="sugar" required>
+
+      <label>ความดันตัวบน (mmHg):</label>
+      <input type="number" name="bp_sys" required>
+
+      <label>ความดันตัวล่าง (mmHg):</label>
+      <input type="number" name="bp_dia" required>
+    </div>
+
+    <div class="form-section">
+      <h4>ผลทดสอบสมรรถภาพทางกาย</h4>
+
+      <label>การนั่งงอตัวไปข้างหน้า (ซม.):</label>
+      <input type="number" name="sit_and_reach" required>
+
+      <label>การยกเข่าขึ้น-ลง 3 นาที (ครั้ง):</label>
+      <input type="number" name="step_test" required>
+
+      <label>การยืน-นั่งบนเก้าอี้ 60 วินาที (ครั้ง):</label>
+      <input type="number" name="chair_stand" required>
+
+      <label>แรงบีบมือ (กก.):</label>
+      <input type="number" name="grip_strength" required>
+
+      <label>การซิตอัพ (ครั้ง):</label>
+      <input type="number" name="sit_ups" required>
+    </div>
+
+    <button type="submit">ประเมินผล</button>
+  </form>
+
+  {% if result %}
+    <hr>
+    <h3>ผลการประเมิน</h3>
+
+    <div class="result-group">
+      <h4>ค่าดัชนีมวลกาย (BMI)</h4>
+      <p><strong>BMI:</strong> {{ result['bmi'] }} – {{ result['bmi_status'] }}
+        <span class="emoji">
+          {% if result['bmi_status'] == 'ปกติ' %}
+            ☺
+          {% elif result['bmi_status'].startswith('อ้วน') %}
+            △
+          {% elif result['bmi_status'] == 'ผอม' %}
+            ⚖
+          {% else %}
+            ✪
+          {% endif %}
+        </span>
+      </p>
+      <p><strong>คำแนะนำ:</strong> {{ result['bmi_advice'] }}</p>
+    </div>
+
+    <div class="result-group">
+      <h4>ระดับน้ำตาลในเลือด</h4>
+      <p><strong>ระดับน้ำตาล:</strong> {{ result['sugar_status'] }}
+        <span class="emoji">
+          {% if result['sugar_status'] == 'ปกติ' %}
+            ✔
+          {% elif result['sugar_status'] == 'น้ำตาลต่ำ' %}
+            ↓
+          {% else %}
+            ⚠
+          {% endif %}
+        </span>
+      </p>
+      <p><strong>คำแนะนำ:</strong> {{ result['sugar_advice'] }}</p>
+    </div>
+
+    <div class="result-group">
+      <h4>ความดันโลหิต</h4>
+      <p><strong>ความดัน:</strong> {{ result['bp_status'] }}
+        <span class="emoji">
+          {% if result['bp_status'] == 'ความดันปกติ' %}
+            ❤️
+          {% elif result['bp_status'] == 'ความดันเริ่มสูง' %}
+            ⚠
+          {% else %}
+            ❗
+          {% endif %}
+        </span>
+      </p>
+      <p><strong>คำแนะนำ:</strong> {{ result['bp_advice'] }}</p>
+    </div>
+
+    <div class="result-group">
+      <h4>รอบเอว</h4>
+      <p><strong>รอบเอว:</strong> {{ result['waist_status'] }}
+        <span class="emoji">
+          {% if result['waist_status'] == 'รอบเอวปกติ' %}
+            ✔
+          {% else %}
+            ⚠
+          {% endif %}
+        </span>
+      </p>
+      <p><strong>คำแนะนำ:</strong> {{ result['waist_advice'] }}</p>
+    </div>
+
+    {% if result['fitness'] %}
       <div class="result-group">
-        <p><strong>{{ test.name }}:</strong> {{ test.value }} – 
-          <span class="
-            {% if test.level == 'ดีมาก' %}
-              good
-            {% elif test.level == 'ดี' %}
-              good
-            {% elif test.level == 'พอใช้' %}
-              warning
-            {% else %}
-              bad
-            {% endif %}
-          ">
-            {{ test.level }}
-          </span>
-          <span class="emoji">
-            {% if test.level == 'ดีมาก' %}
-              ★
-            {% elif test.level == 'ดี' %}
-              ✔
-            {% elif test.level == 'พอใช้' %}
-              △
-            {% else %}
-              ⚠
-            {% endif %}
-          </span>
-        </p>
-        <p><strong>คำอธิบาย:</strong> {{ test.description }}</p>
-        <p><strong>คำแนะนำ:</strong> {{ test.recommendation }}</p>
+        <h4>สมรรถภาพทางกาย</h4>
+        {% for test in result['fitness'] %}
+          <div class="result-group">
+            <p><strong>{{ test.name }}:</strong> {{ test.value }} –
+              <span class="
+                {% if test.level == 'ดีมาก' %}
+                  good
+                {% elif test.level == 'ดี' %}
+                  good
+                {% elif test.level == 'พอใช้' %}
+                  warning
+                {% else %}
+                  bad
+                {% endif %}
+              ">{{ test.level }}</span>
+              <span class="emoji">
+                {% if test.level == 'ดีมาก' %}
+                  ★
+                {% elif test.level == 'ดี' %}
+                  ✔
+                {% elif test.level == 'พอใช้' %}
+                  △
+                {% else %}
+                  ⚠
+                {% endif %}
+              </span>
+            </p>
+            <p><strong>คำอธิบาย:</strong> {{ test.description }}</p>
+            <p><strong>คำแนะนำ:</strong> {{ test.recommendation }}</p>
+          </div>
+        {% endfor %}
       </div>
-    {% endfor %}
-  </div>
-{% endif %}
+    {% endif %}
+  {% endif %}
 
-{% if result['summary'] %}
-  <div class="result-group">
-    <h4>สรุปสุขภาพโดยรวม:</h4>
-    <p>{{ result['summary'] }}</p>
-  </div>
-{% endif %}
+</body>
+</html>

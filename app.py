@@ -5,7 +5,6 @@ app = Flask(__name__)
 def index():
     result = None
     if request.method == 'POST':
-        # รับข้อมูลจากฟอร์ม
         age = int(request.form['age'])
         gender = request.form['gender']
         height = float(request.form['height'])
@@ -15,7 +14,6 @@ def index():
         bp_sys = int(request.form['bp_sys'])
         bp_dia = int(request.form['bp_dia'])
 
-        # ทดสอบสมรรถภาพทางกาย
         sit_and_reach = float(request.form['sit_and_reach'])
         step_test = int(request.form['step_test'])
         chair_stand = int(request.form['chair_stand'])
@@ -70,63 +68,83 @@ def index():
             waist_status = 'รอบเอวเกินเกณฑ์'
             waist_advice = 'ควรลดไขมันหน้าท้องด้วยการควบคุมอาหารและออกกำลังกาย'
 
-        # ฟิตเนส (สมรรถภาพทางกาย)
+        # สมรรถภาพทางกาย
         fitness_results = {}
 
-        def level(val, good, fair, poor):
-            if val >= good:
-                return 'ดีมาก'
-            elif val >= fair:
-                return 'ดี'
-            elif val >= poor:
-                return 'พอใช้'
+        def interpret_sit_and_reach(age, gender, value):
+            if value >= 20:
+                return ('ดี', 'กล้ามเนื้อหลังและขาอยู่ในเกณฑ์ดี ช่วยลดอาการปวดหลัง')
+            elif value >= 10:
+                return ('ปานกลาง', 'ควรยืดเหยียดกล้ามเนื้อหลังและขาสม่ำเสมอ')
             else:
-                return 'ควรปรับปรุง'
+                return ('ต่ำ', 'ความยืดหยุ่นต่ำ เสี่ยงบาดเจ็บ ควรฝึกโยคะหรือยืดเหยียดทุกวัน')
 
-        def interpret(name, value, level):
-            desc = ''
-            advice = ''
-            if level == 'ดีมาก':
-                desc = 'อยู่ในระดับดีมาก แสดงถึงสมรรถภาพที่ยอดเยี่ยม'
-                advice = 'รักษาการออกกำลังกายแบบนี้ไว้ต่อเนื่อง'
-            elif level == 'ดี':
-                desc = 'อยู่ในระดับดี สมรรถภาพอยู่ในเกณฑ์เหมาะสม'
-                advice = 'ควรออกกำลังกายต่อเนื่องเพื่อรักษาระดับนี้'
-            elif level == 'พอใช้':
-                desc = 'สมรรถภาพพอใช้ แต่ยังมีพัฒนาการได้อีก'
-                advice = 'ควรเพิ่มกิจกรรมทางกาย เช่น เดินเร็วหรือว่ายน้ำ'
+        def interpret_step_test(age, gender, value):
+            if value >= 90:
+                return ('ดี', 'สมรรถภาพหัวใจและปอดดีเยี่ยม ควรรักษาไว้')
+            elif value >= 60:
+                return ('ปานกลาง', 'ควรออกกำลังกายแบบแอโรบิกเพิ่ม เช่น เดินเร็ว ปั่นจักรยาน')
             else:
-                desc = 'สมรรถภาพต่ำกว่ามาตรฐาน'
-                advice = 'ควรปรึกษาผู้เชี่ยวชาญเพื่อวางแผนการออกกำลังกาย'
+                return ('ต่ำ', 'สมรรถภาพหัวใจไม่ดี เสี่ยงเหนื่อยง่าย ควรเริ่มออกกำลังกายเบา ๆ')
 
-            return {
-                'value': value,
-                'level': level,
-                'description': desc,
-                'recommendation': advice
-            }
+        def interpret_chair_stand(age, gender, value):
+            if value >= 25:
+                return ('ดี', 'กล้ามเนื้อขาแข็งแรง ลดความเสี่ยงหกล้ม')
+            elif value >= 15:
+                return ('ปานกลาง', 'ควรฝึกนั่ง-ลุกจากเก้าอี้ หรือออกกำลังกายขา')
+            else:
+                return ('ต่ำ', 'กล้ามเนื้อขาอ่อนแรง ควรเสริมสร้างโดยฝึกยืน-นั่งบ่อย ๆ')
 
-        # เกณฑ์สมรรถภาพเบื้องต้น (ชายอายุ 20-29 ปี)
-        fitness_results['sit_and_reach'] = interpret(
-            'นั่งงอตัว', sit_and_reach,
-            level(sit_and_reach, 35, 30, 25)
-        )
-        fitness_results['step_test'] = interpret(
-            'Step Test', step_test,
-            level(step_test, 130, 110, 90)
-        )
-        fitness_results['chair_stand'] = interpret(
-            'Chair Stand', chair_stand,
-            level(chair_stand, 30, 25, 20)
-        )
-        fitness_results['grip_strength'] = interpret(
-            'แรงบีบมือ', grip_strength,
-            level(grip_strength, 45, 35, 25)
-        )
-        fitness_results['sit_ups'] = interpret(
-            'Sit-Ups', sit_ups,
-            level(sit_ups, 40, 30, 20)
-        )
+        def interpret_grip_strength(age, gender, value):
+            if value >= 0.5:
+                return ('ดี', 'กล้ามเนื้อมือและแขนแข็งแรง ช่วยในการทำกิจกรรมประจำวัน')
+            elif value >= 0.3:
+                return ('ปานกลาง', 'ควรฝึกกำมือ บีบลูกบอลยาง หรือยกดัมเบลเบา ๆ')
+            else:
+                return ('ต่ำ', 'แรงบีบมือต่ำ เสี่ยงกล้ามเนื้ออ่อนแรง ควรฝึกใช้งานมือบ่อย ๆ')
+
+        def interpret_sit_ups(age, gender, value):
+            if value >= 30:
+                return ('ดี', 'กล้ามเนื้อหน้าท้องแข็งแรง ลดอาการปวดหลัง')
+            elif value >= 15:
+                return ('ปานกลาง', 'ควรฝึกซิตอัพหรือท่าแพลงก์เสริมกล้ามเนื้อหน้าท้อง')
+            else:
+                return ('ต่ำ', 'กล้ามเนื้อหน้าท้องอ่อนแรง ควรฝึกสม่ำเสมอเพื่อลดอาการปวดหลัง')
+
+        fitness_results['sit_and_reach'] = {
+            'value': sit_and_reach,
+            'level': interpret_sit_and_reach(age, gender, sit_and_reach)[0],
+            'description': interpret_sit_and_reach(age, gender, sit_and_reach)[1],
+            'recommendation': 'ฝึกยืดกล้ามเนื้อหลังและขาเป็นประจำ'
+        }
+
+        fitness_results['step_test'] = {
+            'value': step_test,
+            'level': interpret_step_test(age, gender, step_test)[0],
+            'description': interpret_step_test(age, gender, step_test)[1],
+            'recommendation': 'ออกกำลังกายแบบแอโรบิกต่อเนื่อง'
+        }
+
+        fitness_results['chair_stand'] = {
+            'value': chair_stand,
+            'level': interpret_chair_stand(age, gender, chair_stand)[0],
+            'description': interpret_chair_stand(age, gender, chair_stand)[1],
+            'recommendation': 'ฝึกนั่ง-ลุกจากเก้าอี้วันละหลายรอบ'
+        }
+
+        fitness_results['grip_strength'] = {
+            'value': grip_strength,
+            'level': interpret_grip_strength(age, gender, grip_strength)[0],
+            'description': interpret_grip_strength(age, gender, grip_strength)[1],
+            'recommendation': 'ฝึกบีบลูกบอลยาง หรือบีบมือบ่อย ๆ'
+        }
+
+        fitness_results['sit_ups'] = {
+            'value': sit_ups,
+            'level': interpret_sit_ups(age, gender, sit_ups)[0],
+            'description': interpret_sit_ups(age, gender, sit_ups)[1],
+            'recommendation': 'ฝึกซิตอัพหรือท่าแพลงก์เสริมกล้ามเนื้อหน้าท้อง'
+        }
 
         # แปลงชื่อภาษาไทยสำหรับแสดงผล
         thai_labels = {
@@ -147,7 +165,6 @@ def index():
                 'recommendation': data['recommendation']
             })
 
-        # รวมผลทั้งหมด
         result = {
             'bmi': bmi,
             'bmi_status': bmi_status,
@@ -164,4 +181,4 @@ def index():
     return render_template('index.html', result=result)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
